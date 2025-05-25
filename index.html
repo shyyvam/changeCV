@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customizable Resume Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent-color: #2563eb; /* Default blue-600 */
+            --accent-color-dark: #1d4ed8; /* Default blue-700 for hover */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        [contenteditable="true"] {
+            outline: 2px dashed transparent;
+            transition: outline-color 0.3s, background-color 0.3s;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        [contenteditable="true"]:hover,
+        [contenteditable="true"]:focus {
+            outline-color: var(--accent-color);
+            background-color: rgba(var(--accent-color-rgb, 59, 130, 246), 0.05);
+        }
+        
+        /* Apply accent color to specific elements */
+        .text-accent, [contenteditable="true"] a {
+            color: var(--accent-color);
+        }
+        .hover\:text-accent-dark:hover, [contenteditable="true"] a:hover {
+            color: var(--accent-color-dark);
+        }
+        .border-accent {
+            border-color: var(--accent-color);
+        }
+
+        .resume-section + .resume-section {
+            margin-top: 1rem;
+        }
+        .bullet-list li {
+            position: relative;
+            padding-left: 1.1rem;
+            margin-bottom: 0.15rem;
+        }
+        .bullet-list li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #4b5563; /* gray-600 */
+        }
+        .page-break { page-break-after: always; }
+
+        /* Control Panel Styles */
+        .controls-panel {
+            background-color: #f3f4f6; /* gray-100 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            margin-bottom: 1.5rem;
+        }
+        .controls-panel h3 {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600; /* font-semibold */
+            margin-bottom: 0.75rem;
+        }
+        .control-button {
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: 500; /* font-medium */
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem; /* rounded-md */
+            transition: background-color 0.2s;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            border: none;
+            cursor: pointer;
+        }
+        .control-button:hover {
+            background-color: var(--accent-color-dark);
+        }
+        .color-picker-label {
+            margin-right: 0.5rem;
+            font-size: 0.875rem; /* text-sm */
+        }
+        input[type="color"] {
+            width: 40px;
+            height: 40px;
+            border: none;
+            padding: 0;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+        .delete-section-btn {
+            background-color: #ef4444; /* red-500 */
+            color: white;
+            font-size: 0.75rem; /* text-xs */
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            margin-left: 0.5rem;
+            cursor: pointer;
+            border: none;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+        .resume-section:hover .delete-section-btn {
+            opacity: 1;
+        }
+
+
+        /* Print specific styles */
+        @media print {
+            body {
+                font-size: 9.5pt; margin: 0; padding: 0;
+                -webkit-print-color-adjust: exact; print-color-adjust: exact;
+                background-color: #fff;
+            }
+            .resume-container {
+                max-width: 100% !important; width: 100% !important;
+                box-shadow: none !important; margin: 0 auto !important;
+                padding: 0.3in 0.4in !important; border: none !important;
+            }
+            header.text-center { padding-bottom: 0.3rem !important; margin-bottom: 0.5rem !important; }
+            header.text-center h1 { font-size: 22pt !important; font-weight: 700 !important; margin-bottom: 0 !important; line-height: 1.1 !important; color: var(--accent-color) !important; }
+            header.text-center p.professional-title { font-size: 12pt !important; margin-top: 0.05rem !important; margin-bottom: 0.2rem !important; line-height: 1.1 !important; color: var(--accent-color) !important; }
+            header.text-center div.contact-info { margin-top: 0.2rem !important; font-size: 8.5pt !important; line-height: 1.2 !important; }
+            header.text-center div.contact-info span, header.text-center div.contact-info a { padding: 0 0.1rem !important; }
+            header.text-center div.contact-info span.hidden { margin: 0 0.1rem !important; }
+
+            .resume-section { margin-top: 0.5rem !important; }
+            .resume-section h2 { font-size: 13pt !important; font-weight: 600 !important; padding-bottom: 0.05rem !important; margin-bottom: 0.2rem !important; border-bottom-width: 1px !important; line-height: 1.1 !important; border-color: var(--accent-color) !important; }
+            .resume-section h3 { font-size: 10pt !important; font-weight: 600 !important; margin-bottom: 0 !important; line-height: 1.1 !important; }
+            .resume-section .text-xs, .resume-section .text-sm { font-size: 8.5pt !important; margin-bottom: 0 !important; line-height: 1.1 !important; }
+            .resume-section p, .resume-section ul, .resume-section div:not(header div):not(.controls-panel) { font-size: 9pt !important; line-height: 1.25 !important; margin-bottom: 0.1rem !important; }
+            .resume-section p strong { font-weight: 500 !important; }
+            .resume-section ul { padding-left: 0.8rem !important; list-style-position: outside !important; }
+            .bullet-list li { margin-bottom: 0.05rem !important; padding-left: 0.7rem !important; }
+            .bullet-list li::before { left: 0rem; top: 0.05rem; }
+
+            .resume-section .mb-3 { margin-bottom: 0.3rem !important; }
+            .resume-section .mb-2 { margin-bottom: 0.1rem !important; }
+            .resume-section .mb-1 { margin-bottom: 0 !important; }
+            .resume-section .mt-0\.5 { margin-top: 0.05rem !important; }
+
+            .no-print, .controls-panel, .delete-section-btn { display: none !important; }
+            [contenteditable="true"]:hover, [contenteditable="true"]:focus { outline: none !important; background-color: transparent !important; }
+            a[href^="http"]::after, a[href^="mailto"]::after { content: ""; }
+            a, [contenteditable="true"] a { color: var(--accent-color) !important; text-decoration: none !important; }
+            .text-accent { color: var(--accent-color) !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-6 antialiased">
+
+    <div class="controls-panel no-print max-w-4xl mx-auto">
+        <h3>Resume Controls</h3>
+        <div>
+            <button id="addExperienceBtn" class="control-button">Add Experience</button>
+            <button id="addEducationBtn" class="control-button">Add Education</button>
+            <button id="addProjectsBtn" class="control-button">Add Project</button>
+            <button id="addCustomSectionBtn" class="control-button">Add Custom Section</button>
+        </div>
+        <div class="mt-4">
+            <label for="accentColorPicker" class="color-picker-label">Accent Color:</label>
+            <input type="color" id="accentColorPicker" value="#2563eb">
+        </div>
+         <div class="mt-2">
+            <button onclick="window.print()" class="control-button bg-green-500 hover:bg-green-600">Print / Save as PDF</button>
+        </div>
+    </div>
+    
+    <div id="resumeCanvas" class="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-xl resume-container border border-gray-200">
+        <header class="text-center border-b pb-4 mb-6">
+            <h1 contenteditable="true" class="text-3xl sm:text-4xl font-bold text-gray-800 text-accent" id="resumeName">Your Name</h1>
+            <p contenteditable="true" class="text-lg sm:text-xl font-medium mt-1 professional-title text-accent" id="resumeTitle">Your Professional Title</p>
+            <div class="mt-3 text-xs sm:text-sm text-gray-600 flex flex-col sm:flex-row justify-center items-center space-y-1 sm:space-y-0 sm:space-x-3 contact-info">
+                <a href="mailto:your.email@example.com" class="hover:text-accent-dark">
+                    <span contenteditable="true">your.email@example.com</span>
+                </a>
+                <span class="hidden sm:inline">|</span>
+                <span contenteditable="true" class="hover:text-accent-dark">(123) 456-7890</span>
+                <span class="hidden sm:inline">|</span>
+                <a href="https://linkedin.com/in/yourprofile" target="_blank" rel="noopener noreferrer" class="hover:text-accent-dark">
+                    <span contenteditable="true">linkedin.com/in/yourprofile</span>
+                </a>
+                <span class="hidden sm:inline">|</span>
+                <a href="https://github.com/yourusername" target="_blank" rel="noopener noreferrer" class="hover:text-accent-dark">
+                    <span contenteditable="true">github.com/yourusername</span>
+                </a>
+            </div>
+        </header>
+
+        <section class="resume-section" data-section-type="summary">
+            <h2 class="text-xl font-semibold text-gray-700 border-b-2 border-accent pb-1 mb-2">Summary <button class="delete-section-btn no-print" onclick="deleteSection(this)">Delete</button></h2>
+            <p contenteditable="true" class="text-sm text-gray-700 leading-relaxed">
+                A brief 2-3 sentence summary about your professional background, skills, and career goals. Highlight your key achievements and what you bring to a potential employer. Make it concise and impactful.
+            </p>
+        </section>
+
+        <section class="resume-section" data-section-type="experience_parent">
+            <h2 class="text-xl font-semibold text-gray-700 border-b-2 border-accent pb-1 mb-2">Experience <button class="delete-section-btn no-print" onclick="deleteSection(this.closest('section'))" title="Delete entire Experience section">Delete All Exp.</button></h2>
+            <div class="experience-item mb-3">
+                <h3 contenteditable="true" class="text-lg font-semibold text-gray-800">Senior Software Engineer</h3>
+                <div class="flex justify-between items-center text-xs text-gray-600 mb-0.5">
+                    <p contenteditable="true" class="font-medium">Tech Solutions Inc.</p>
+                    <p contenteditable="true">Jan 2020 - Present</p>
+                </div>
+                <p contenteditable="true" class="text-xs text-gray-500 mb-1">San Francisco, CA</p>
+                <ul contenteditable="true" class="list-disc pl-5 text-sm text-gray-700 leading-relaxed bullet-list">
+                    <li>Led a team of 5 engineers in developing and launching a new cloud-based SaaS product.</li>
+                    <li>Designed and implemented scalable microservices architecture.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="resume-section" data-section-type="education_parent">
+            <h2 class="text-xl font-semibold text-gray-700 border-b-2 border-accent pb-1 mb-2">Education <button class="delete-section-btn no-print" onclick="deleteSection(this.closest('section'))" title="Delete entire Education section">Delete All Edu.</button></h2>
+            <div class="education-item mb-2">
+                <h3 contenteditable="true" class="text-lg font-semibold text-gray-800">Master of Science in Computer Science</h3>
+                <div class="flex justify-between items-center text-xs text-gray-600 mb-0.5">
+                    <p contenteditable="true" class="font-medium">University of Advanced Technology</p>
+                    <p contenteditable="true">Graduated: May 2017</p>
+                </div>
+                <p contenteditable="true" class="text-xs text-gray-500">GPA: 3.8/4.0</p>
+            </div>
+        </section>
+        
+        <section class="resume-section" data-section-type="skills">
+            <h2 class="text-xl font-semibold text-gray-700 border-b-2 border-accent pb-1 mb-2">Skills <button class="delete-section-btn no-print" onclick="deleteSection(this)">Delete</button></h2>
+            <div contenteditable="true" class="text-sm text-gray-700 leading-relaxed">
+                <p><strong class="font-medium">Languages:</strong> JavaScript, Python, Java</p>
+                <p><strong class="font-medium">Frameworks:</strong> React, Node.js, Django</p>
+            </div>
+        </section>
+
+        <section class="resume-section" data-section-type="projects_parent">
+             <h2 class="text-xl font-semibold text-gray-700 border-b-2 border-accent pb-1 mb-2">Projects <button class="delete-section-btn no-print" onclick="deleteSection(this.closest('section'))" title="Delete entire Projects section">Delete All Proj.</button></h2>
+            <div class="project-item mb-2">
+                <h3 contenteditable="true" class="text-md font-semibold text-gray-800">Personal Portfolio Website</h3>
+                <p contenteditable="true" class="text-xs text-gray-600 mb-0.5">Developed a responsive personal portfolio.</p>
+                <div class="text-xs">
+                    <span class="text-gray-700">Link: </span>
+                    <a href="https://yourportfolio.com" target="_blank" rel="noopener noreferrer" class="hover:text-accent-dark">
+                        <span contenteditable="true">yourportfolio.com</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+        </div>
+
+    <footer class="text-center mt-6 mb-4 text-xs text-gray-500 no-print">
+        <p>Click on text to edit. Use controls to add sections or change accent color. Your changes are not saved automatically beyond this browser session.</p>
+    </footer>
+
+<script>
+    const resumeCanvas = document.getElementById('resumeCanvas');
+    const accentColorPicker = document.getElementById('accentColorPicker');
+
+    // Function to convert hex to RGB for transparent background on focus
+    function hexToRgb(hex) {
+        const bigint = parseInt(hex.slice(1), 16);
+        const r = (bigint >> 16) & 255;
+        const g = (bigint >> 8) & 255;
+        const b = bigint & 255;
+        return `${r}, ${g}, ${b}`;
+    }
+
+    // Accent Color Change
+    accentColorPicker.addEventListener('input', (event) => {
+        const newColor = event.target.value;
+        const darkerColor = PbfHex(newColor, -20); // Simple function to make color darker for hover
+        
+        document.documentElement.style.setProperty('--accent-color', newColor);
+        document.documentElement.style.setProperty('--accent-color-dark', darkerColor);
+        document.documentElement.style.setProperty('--accent-color-rgb', hexToRgb(newColor));
+    });
+
+    // Helper function to darken/lighten hex color (simple version)
+    function PbfHex(color, percent) {
+        let R = parseInt(color.substring(1,3),16);
+        let G = parseInt(color.substring(3,5),16);
+        let B = parseInt(color.substring(5,7),16);
+
+        R = parseInt(R * (100 + percent) / 100);
+        G = parseInt(G * (100 + percent) / 100);
+        B = parseInt(B * (100 + percent) / 100);
+
+        R = (R<255)?R:255;  
+        G = (G<255)?G:255;  
+        B = (B<255)?B:255;  
+
+        R = (R>0)?R:0;
+        G = (G>0)?G:0;
+        B = (B>0)?B:0;
+
+        const RR = ((R.toString(16).length==1)?"0"+R.toString(16):R.toString(16));
+        const GG = ((G.toString(16).length==1)?"0"+G.toString(16):G.toString(16));
+        const BB = ((B.toString(16).length==1)?"0"+B.toString(16):B.toString(16));
+
+        return "#"+RR+GG+BB;
+    }
+    // Initialize accent color RGB for focus style
+    document.documentElement.style.setProperty('--accent-color-rgb', hexToRgb(accentColorPicker.value));
+
+
+    // --- Section Templates ---
+
+    function createExperienceHTML() {
+        return `
+            <div class="experience-item mb-3">
+                <div class="flex justify-between items-start">
+                    <h3 contenteditable="true" class="text-lg font-semibold text-gray-800 flex-grow">New Job Title</h3>
+                    <button class="delete-section-btn no-print text-xs ml-2" onclick="this.parentElement.parentElement.remove()" title="Delete this experience entry">Remove</button>
+                </div>
+                <div class="flex justify-between items-center text-xs text-gray-600 mb-0.5">
+                    <p contenteditable="true" class="font-medium">Company Name</p>
+                    <p contenteditable="true">Date Range (e.g., Jan 202X - Present)</p>
+                </div>
+                <p contenteditable="true" class="text-xs text-gray-500 mb-1">Location (e.g., City, State)</p>
+                <ul contenteditable="true" class="list-disc pl-5 text-sm text-gray-700 leading-relaxed bullet-list">
+                    <li>Responsibility or achievement 1...</li>
+                    <li>Responsibility or achievement 2...</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    function createEducationHTML() {
+        return `
+            <div class="education-item mb-2">
+                 <div class="flex justify-between items-start">
+                    <h3 contenteditable="true" class="text-lg font-semibold text-gray-800 flex-grow">Degree Name / Certificate</h3>
+                    <button class="delete-section-btn no-print text-xs ml-2" onclick="this.parentElement.parentElement.remove()" title="Delete this education entry">Remove</button>
+                </div>
+                <div class="flex justify-between items-center text-xs text-gray-600 mb-0.5">
+                    <p contenteditable="true" class="font-medium">Institution Name</p>
+                    <p contenteditable="true">Graduation Date / Year</p>
+                </div>
+                <p contenteditable="true" class="text-xs text-gray-500">Optional: GPA, Honors, Relevant Coursework</p>
+            </div>
+        `;
+    }
+    
+    function createProjectHTML() {
+        // Corrected: Removed backslashes before backticks
+        return `
+            <div class="project-item mb-2">
+                <div class="flex justify-between items-start">
+                    <h3 contenteditable="true" class="text-md font-semibold text-gray-800 flex-grow">Project Title</h3>
+                    <button class="delete-section-btn no-print text-xs ml-2" onclick="this.parentElement.parentElement.remove()" title="Delete this project entry">Remove</button>
+                </div>
+                <p contenteditable="true" class="text-xs text-gray-600 mb-0.5">Brief project description...</p>
+                <div class="text-xs">
+                    <span class="text-gray-700">Link (Optional): </span>
+                    <a href="#" target="_blank" rel="noopener noreferrer" class="hover:text-accent-dark">
+                        <span contenteditable="true">projectlink.com</span>
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+
+    function createCustomSectionHTML(title = "New Custom Section") {
+        // Sanitize title to prevent basic HTML injection if used directly in attributes, though here it's for text content
+        const safeTitle = title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return `
+            <section class="resume-section" data-section-type="custom">
+                <h2 class="text-xl font-semibold text-gray-700 border-b-2 border-accent pb-1 mb-2">
+                    <span contenteditable="true">${safeTitle}</span>
+                    <button class="delete-section-btn no-print" onclick="deleteSection(this.closest('section'))">Delete Section</button>
+                </h2>
+                <div contenteditable="true" class="text-sm text-gray-700 leading-relaxed">
+                    <p>Start typing your content here. You can use multiple paragraphs.</p>
+                    <ul class="bullet-list">
+                        <li>Or make a bulleted list.</li>
+                    </ul>
+                </div>
+            </section>
+        `;
+    }
+
+    // --- Add Section Logic ---
+    document.getElementById('addExperienceBtn').addEventListener('click', () => {
+        let parentSection = document.querySelector('[data-section-type="experience_parent"]');
+        if (!parentSection) { // If parent section was deleted, recreate it
+            parentSection = document.createElement('section');
+            parentSection.className = 'resume-section';
+            parentSection.dataset.sectionType = 'experience_parent';
+            parentSection.innerHTML = '<h2 class="text-xl font-semibold text-gray-700 border-b-2 border-accent pb-1 mb-2">Experience <button class="delete-section-btn no-print" onclick="deleteSection(this.closest(\\'section\\'))" title="Delete entire Experience section">Delete All Exp.</button></h2>';
+            // Find a logical place to insert it, e.g., before education or skills
+            const eduSection = document.querySelector('[data-section-type="education_parent"]');
+            if (eduSection) resumeCanvas.insertBefore(parentSection, eduSection);
+            else resumeCanvas.appendChild(parentSection); // Append if no other sections found
+        }
+        const newItem = document.createElement('div');
+        newItem.innerHTML = createExperienceHTML();
+        parentSection.appendChild(newItem.firstElementChild);
+    });
+
+    document.getElementById('addEducationBtn').addEventListener('click', () => {
+        let parentSection = document.querySelector('[data-section-type="education_parent"]');
+         if (!parentSection) {
+            parentSection = document.createElement('section');
+            parentSection.className = 'resume-section';
+            parentSection.dataset.sectionType = 'education_parent';
+            parentSection.innerHTML = '<h2 class="text-xl font-semibold text-gray-700 border-b-2 border-accent pb-1 mb-2">Education <button class="delete-section-btn no-print" onclick="deleteSection(this.closest(\\'section\\'))" title="Delete entire Education section">Delete All Edu.</button></h2>';
+            const skillsSection = document.querySelector('[data-section-type="skills"]');
+            if (skillsSection) resumeCanvas.insertBefore(parentSection, skillsSection);
+            else resumeCanvas.appendChild(parentSection);
+        }
+        const newItem = document.createElement('div');
+        newItem.innerHTML = createEducationHTML();
+        parentSection.appendChild(newItem.firstElementChild);
+    });
+    
+    document.getElementById('addProjectsBtn').addEventListener('click', () => {
+        let parentSection = document.querySelector('[data-section-type="projects_parent"]');
+         if (!parentSection) {
+            parentSection = document.createElement('section');
+            parentSection.className = 'resume-section';
+            parentSection.dataset.sectionType = 'projects_parent';
+            parentSection.innerHTML = '<h2 class="text-xl font-semibold text-gray-700 border-b-2 border-accent pb-1 mb-2">Projects <button class="delete-section-btn no-print" onclick="deleteSection(this.closest(\\'section\\'))" title="Delete entire Projects section">Delete All Proj.</button></h2>';
+            // Try to add before footer or as last element
+            resumeCanvas.appendChild(parentSection); // Simple append for now
+        }
+        const newItem = document.createElement('div');
+        newItem.innerHTML = createProjectHTML();
+        parentSection.appendChild(newItem.firstElementChild);
+    });
+
+    document.getElementById('addCustomSectionBtn').addEventListener('click', () => {
+        const sectionTitle = prompt("Enter title for the new section:", "Achievements");
+        if (sectionTitle && sectionTitle.trim() !== "") {
+            const newSection = document.createElement('div'); // Create a temporary div to parse HTML
+            newSection.innerHTML = createCustomSectionHTML(sectionTitle.trim());
+            resumeCanvas.appendChild(newSection.firstElementChild); // Append the actual section element
+        }
+    });
+    
+    // --- Delete Section Logic ---
+    // The deleteSection function is called directly from the buttons' onclick attributes.
+    // It targets the closest parent <section> or the button's parent element for individual items.
+    function deleteSection(elementOrButton) {
+        let elementToRemove;
+        if (elementOrButton.tagName === 'BUTTON') { // If it's the button itself (for main sections)
+             elementToRemove = elementOrButton.closest('section');
+        } else { // If it's a section element passed directly (for parent sections)
+            elementToRemove = elementOrButton;
+        }
+
+        if (elementToRemove) {
+            // A simple confirmation dialog
+            const sectionTitleElement = elementToRemove.querySelector('h2 span') || elementToRemove.querySelector('h2');
+            const sectionTitle = sectionTitleElement ? sectionTitleElement.textContent.trim().split(" ")[0] : "this item";
+            
+            // Custom modal for confirmation (since alert/confirm are bad)
+            showCustomConfirm(`Are you sure you want to delete the "${sectionTitle}" section/item?`, () => {
+                 elementToRemove.remove();
+            });
+        } else {
+            console.error("Could not find element to remove for deletion.");
+        }
+    }
+
+    // Basic Custom Confirm Modal
+    function showCustomConfirm(message, onConfirm) {
+        const existingModal = document.getElementById('customConfirmModal');
+        if (existingModal) existingModal.remove();
+
+        const modalHTML = `
+            <div id="customConfirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center no-print z-50">
+                <div class="p-5 border w-96 shadow-lg rounded-md bg-white">
+                    <div class="text-center">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">${message}</h3>
+                        <div class="mt-4 flex justify-around">
+                            <button id="confirmCancelBtn" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</button>
+                            <button id="confirmOkBtn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        document.getElementById('confirmOkBtn').onclick = () => {
+            onConfirm();
+            document.getElementById('customConfirmModal').remove();
+        };
+        document.getElementById('confirmCancelBtn').onclick = () => {
+            document.getElementById('customConfirmModal').remove();
+        };
+    }
+
+
+</script>
+</body>
+</html>
